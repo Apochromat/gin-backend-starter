@@ -15,6 +15,8 @@ func SetupConfig() error {
 	var configuration *Configuration
 
 	viper.SetConfigFile(".env")
+	viper.AutomaticEnv()
+	
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Error to reading config file, %s", err)
 		return err
