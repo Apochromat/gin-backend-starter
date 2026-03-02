@@ -7,6 +7,7 @@ import (
 
 	"github.com/imshawan/gin-backend-starter/configs"
 	"github.com/imshawan/gin-backend-starter/infra/database"
+	"github.com/imshawan/gin-backend-starter/infra/metrics"
 	"github.com/imshawan/gin-backend-starter/routers"
 	"github.com/spf13/viper"
 )
@@ -27,7 +28,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	router := routers.SetupRouters()
+	registry := metrics.SetupMetrics()
+
+	router := routers.SetupRouters(registry)
 
 	// Run the server with the configurations
 	err := router.Run(configs.ServerConfig())

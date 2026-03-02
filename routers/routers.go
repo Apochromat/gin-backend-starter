@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/imshawan/gin-backend-starter/helpers"
 	"github.com/imshawan/gin-backend-starter/routers/middlewares"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
 )
 
@@ -17,7 +18,7 @@ func registerInternalRoutes(router *gin.Engine) {
 	router.GET("/health", func(context *gin.Context) { helpers.FormatAPIResponse(context, http.StatusOK, gin.H{"health": "Ok"}) })
 }
 
-func SetupRouters() *gin.Engine {
+func SetupRouters(registry *prometheus.Registry) *gin.Engine {
 
 	environment := viper.GetBool("DEBUG")
 	if environment {
@@ -29,6 +30,7 @@ func SetupRouters() *gin.Engine {
 	allowedHosts := viper.GetString("ALLOWED_HOSTS")
 	router := gin.New()
 	router.SetTrustedProxies([]string{allowedHosts})
+	router.Use(middlewares.MetricMiddleware(registry))
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(middlewares.CORSMiddleware())

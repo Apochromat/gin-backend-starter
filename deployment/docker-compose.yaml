@@ -1,0 +1,148 @@
+﻿name: gin-backend-starter
+
+services:
+  backend:
+    build: ../
+    container_name: gin-backend
+    environment:
+      - PORT=4000
+      - PROMETHEUS_PORT=2112
+      - DEBUG=False
+      - ALLOWED_HOSTS=0.0.0.0
+      - ALLOWED_ORIGINS=*
+      - SERVER_TIMEZONE=Asia/Kolkata
+      - DATABASE_URI=mongodb://mongodb:27017
+      - DATABASE_NAME=database
+      - JWT_SECRET=47tc47bc4t46rt4365346r
+      - JWT_EXPIRY_HOURS=14
+    ports:
+      - "4000:4000"
+      - "2112:2112"
+    networks:
+      - mongodb-network
+      - prometheus-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '5m'
+        max-file: 10
+        compress: 'true'
+        
+  mongodb:
+    image: mongo:8.2.5
+    container_name: gin-mongodb
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mongodb-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '5m'
+        max-file: 10
+        compress: 'true'
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+
+  mongodb-exporter:
+    image: percona/mongodb_exporter:0.44
+    container_name: gin-mongodb-exporter
+    command:
+      - '--mongodb.uri=mongodb://mongodb:27017'
+    networks:
+      - mongodb-network
+      - prometheus-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '5m'
+        max-file: 10
+        compress: 'true'
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter
+    container_name: gin-blackbox-exporter
+    volumes:
+      - ./blackbox-exporter/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    networks:
+      - prometheus-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '5m'
+        max-file: 10
+        compress: 'true'
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+
+  prometheus:
+    image: prom/prometheus:v3.10.0
+    container_name: gin-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=14d'
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    networks:
+      - prometheus-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '5m'
+        max-file: 10
+        compress: 'true'
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+
+  grafana:
+    image: grafana/grafana:12.4.0
+    container_name: gin-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    networks:
+      - prometheus-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '5m'
+        max-file: 10
+        compress: 'true'
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+
+volumes:
+  mongo_data:
+  grafana_data:
+  prometheus_data:
+
+networks:
+  mongodb-network:
+    name: gin-mongodb-network
+  prometheus-network:
+    name: gin-prometheus-network
