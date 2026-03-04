@@ -37,7 +37,7 @@ func MetricMiddleware(registry *prometheus.Registry) gin.HandlerFunc {
 
 		metrics.httpRequestCount.Inc()
 		metrics.httpRequestDuration.Add(elapsed.Seconds())
-		if context.Writer.Status()%100 == 5 {
+		if context.Writer.Status()%100 == 5 || context.Writer.Status()%100 == 4 {
 			metrics.httpRequestErrorCount.Inc()
 		}
 	}
