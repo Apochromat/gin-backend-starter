@@ -21,6 +21,7 @@ services:
     networks:
       - mongodb-network
       - prometheus-network
+      - nginx-proxy
     logging:
       driver: 'json-file'
       options:
@@ -173,6 +174,7 @@ services:
       - grafana_data:/var/lib/grafana
     networks:
       - prometheus-network
+      - nginx-proxy
     logging:
       driver: 'json-file'
       options:
@@ -196,3 +198,5 @@ networks:
     name: gin-mongodb-network
   prometheus-network:
     name: gin-prometheus-network
+  nginx-proxy:
+    name: nginx-proxy
