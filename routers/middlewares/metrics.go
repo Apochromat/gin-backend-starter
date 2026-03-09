@@ -11,7 +11,7 @@ import (
 type httpMetrics struct {
 	httpRequestCount      prometheus.Counter
 	httpRequestErrorCount prometheus.Counter
-	httpRequestDuration   prometheus.Counter
+	httpRequestDuration   prometheus.Histogram
 }
 
 func MetricMiddleware(registry *prometheus.Registry) gin.HandlerFunc {
@@ -24,9 +24,23 @@ func MetricMiddleware(registry *prometheus.Registry) gin.HandlerFunc {
 			Name: "http_request_errors_total",
 			Help: "The total number of errors in http requests.",
 		}),
-		httpRequestDuration: promauto.With(registry).NewCounter(prometheus.CounterOpts{
-			Name: "http_request_duration_seconds_sum",
+		httpRequestDuration: promauto.With(registry).NewHistogram(prometheus.HistogramOpts{
+			Name: "http_request_duration_seconds",
 			Help: "The sum of duration of http requests.",
+			Buckets: []float64{
+				0.001,
+				0.005,
+				0.01,
+				0.025,
+				0.05,
+				0.1,
+				0.25,
+				0.5,
+				1.0,
+				2.5,
+				5.0,
+				10.0,
+			},
 		}),
 	}
 
@@ -36,7 +50,7 @@ func MetricMiddleware(registry *prometheus.Registry) gin.HandlerFunc {
 		elapsed := time.Since(start)
 
 		metrics.httpRequestCount.Inc()
-		metrics.httpRequestDuration.Add(elapsed.Seconds())
+		metrics.httpRequestDuration.Observe(elapsed.Seconds())
 		if context.Writer.Status()%100 == 5 || context.Writer.Status()%100 == 4 {
 			metrics.httpRequestErrorCount.Inc()
 		}
